@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, Settings, Volume2, VolumeX, Globe } from 'lucide-react';
+import { Play, Pause, Settings, Volume2, VolumeX, Globe, Terminal } from 'lucide-react';
 import { useMetronome } from './hooks/useMetronome';
 import { usePulseLink } from './hooks/usePulseLink';
+import TesterPeer from './components/TesterPeer';
 
 export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTester, setShowTester] = useState(false);
   const [syncRole, setSyncRole] = useState<'master' | 'slave'>('master');
   const [latencyCompensation, setLatencyCompensation] = useState(0);
 
@@ -117,48 +119,58 @@ export default function App() {
   const isInteractive = !linkEnabled || syncRole === 'master';
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#E0E0E0] font-sans selection:bg-[#FF3B30] selection:text-white overflow-hidden flex flex-col">
-      {/* Header / Status Rail */}
-      <header className="p-6 flex justify-between items-center border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#FF3B30] animate-pulse" />
-          <h1 className="text-xs font-mono uppercase tracking-[0.2em] opacity-50">Pulse // Visual Sync</h1>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {/* Quick Sound Toggler */}
-          <button 
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`p-2 rounded-full border transition-all ${soundEnabled ? "bg-[#FF3B30]/10 border-[#FF3B30] text-[#FF3B30]" : "border-white/10 opacity-30 hover:opacity-100"}`}
-            title={soundEnabled ? "Mute audio beeps" : "Unmute audio beeps"}
-          >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
-
-          <div className="flex items-center gap-6 bg-white/5 px-4 py-1.5 rounded-full border border-white/10 text-xs">
-            <div className="flex items-center gap-2">
-              <Globe size={14} className={linkEnabled ? "text-[#00BFFF]" : "opacity-30"} />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono uppercase tracking-wider leading-none">Link</span>
-                {linkEnabled && (
-                  <span className="text-[8px] font-mono opacity-50 leading-none mt-0.5">
-                    {peerCount} {peerCount === 1 ? 'Peer' : 'Peers'}
-                  </span>
-                )}
-              </div>
-            </div>
-            {linkEnabled && (
-              <span className="text-[9px] font-mono opacity-50 uppercase tracking-widest pl-2 border-l border-white/10">
-                {syncRole}
-              </span>
-            )}
+    <div className="min-h-screen bg-[#0A0A0A] text-[#E0E0E0] font-sans selection:bg-[#FF3B30] selection:text-white overflow-hidden flex flex-row">
+      {/* Main app pane */}
+      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
+        {/* Header / Status Rail */}
+        <header className="p-6 flex justify-between items-center border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-[#FF3B30] animate-pulse" />
+            <h1 className="text-xs font-mono uppercase tracking-[0.2em] opacity-50">Pulse // Visual Sync</h1>
           </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Quick Sound Toggler */}
+            <button 
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className={`p-2 rounded-full border transition-all ${soundEnabled ? "bg-[#FF3B30]/10 border-[#FF3B30] text-[#FF3B30]" : "border-white/10 opacity-30 hover:opacity-100"}`}
+              title={soundEnabled ? "Mute audio beeps" : "Unmute audio beeps"}
+            >
+              {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
 
-          <button onClick={() => setShowSettings(!showSettings)} className="opacity-50 hover:opacity-100 transition-opacity p-1.5">
-            <Settings size={18} />
-          </button>
-        </div>
-      </header>
+            <div className="flex items-center gap-6 bg-white/5 px-4 py-1.5 rounded-full border border-white/10 text-xs">
+              <div className="flex items-center gap-2">
+                <Globe size={14} className={linkEnabled ? "text-[#00BFFF]" : "opacity-30"} />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-mono uppercase tracking-wider leading-none">Link</span>
+                  {linkEnabled && (
+                    <span className="text-[8px] font-mono opacity-50 leading-none mt-0.5">
+                      {peerCount} {peerCount === 1 ? 'Peer' : 'Peers'}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {linkEnabled && (
+                <span className="text-[9px] font-mono opacity-50 uppercase tracking-widest pl-2 border-l border-white/10">
+                  {syncRole}
+                </span>
+              )}
+            </div>
+
+            <button 
+              onClick={() => setShowTester(!showTester)} 
+              className={`p-1.5 rounded-lg border transition-all ${showTester ? "bg-[#00BFFF]/10 border-[#00BFFF]/30 text-[#00BFFF]" : "border-white/10 opacity-50 hover:opacity-100"}`}
+              title="Toggle Simulator Debug Panel"
+            >
+              <Terminal size={18} />
+            </button>
+
+            <button onClick={() => setShowSettings(!showSettings)} className="opacity-50 hover:opacity-100 transition-opacity p-1.5">
+              <Settings size={18} />
+            </button>
+          </div>
+        </header>
 
       {/* Main Display Area */}
       <main className="flex-1 flex flex-col items-center justify-center relative p-4">
@@ -412,6 +424,45 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
+
+      {/* Right Tester Pane (for wider screens) */}
+      <AnimatePresence>
+        {showTester && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "380px", opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="hidden lg:block border-l border-white/10 shrink-0"
+          >
+            <TesterPeer />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile/Tablet Tester Slider Overlay (drawers) */}
+      <AnimatePresence>
+        {showTester && (
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", duration: 0.3 }}
+            className="fixed inset-y-0 right-0 z-40 w-full max-w-sm lg:hidden shadow-2xl"
+          >
+            <div className="absolute top-4 right-4 z-50">
+              <button 
+                onClick={() => setShowTester(false)}
+                className="px-2 py-1 text-[10px] font-mono uppercase bg-black/80 hover:bg-black rounded border border-white/20 text-white"
+              >
+                Close
+              </button>
+            </div>
+            <TesterPeer />
           </motion.div>
         )}
       </AnimatePresence>
