@@ -9,14 +9,15 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showTester, setShowTester] = useState(false);
-  const [syncRole, setSyncRole] = useState<'master' | 'slave'>('master');
   const [latencyCompensation, setLatencyCompensation] = useState(0);
+  const [localTimeSignature, setLocalTimeSignature] = useState("4/4");
 
   // Shared state for collaborative network alignment
   const [sharedState, setSharedState] = useState({
     bpm: 120,
     isPlaying: false,
-    startTime: Date.now()
+    startTime: Date.now(),
+    timeSignature: "4/4"
   });
 
   // Pulse Link Hook (Network Sync)
@@ -24,6 +25,7 @@ export default function App() {
     isConnected: linkConnected, 
     isEnabled: linkEnabled, 
     peerCount,
+    clockOffset,
     toggleLink, 
     updateState: updateLinkState
   } = usePulseLink(
@@ -32,10 +34,13 @@ export default function App() {
       setSharedState({
         bpm: state.bpm ?? 120,
         isPlaying: state.isPlaying ?? false,
-        startTime: state.startTime ?? Date.now()
+        startTime: state.startTime ?? Date.now(),
+        timeSignature: state.timeSignature ?? "4/4"
       });
     }
   );
+
+  const activeTimeSignature = linkEnabled ? (sharedState.timeSignature || "4/4") : localTimeSignature;
 
   // Metronome Hook
   const { 
@@ -52,48 +57,68 @@ export default function App() {
     linkEnabled,
     sharedState.bpm,
     sharedState.isPlaying,
-    sharedState.startTime
+    sharedState.startTime,
+    clockOffset,
+    activeTimeSignature
   );
 
   // Sync state transitions locally/remotely based on sync role handler
   const handleBpmChange = useCallback((newBpm: number) => {
     const clampedBpm = Math.max(20, Math.min(300, newBpm));
     if (linkEnabled) {
-      if (syncRole === 'master') {
-        const now = Date.now();
-        const currentBeatGlobal = (now - sharedState.startTime) / 1000 * (sharedState.bpm / 60);
-        const newStartTime = now - (currentBeatGlobal * (60 / clampedBpm) * 1000);
-        
-        const nextState = {
-          bpm: clampedBpm,
-          startTime: newStartTime,
-          isPlaying: sharedState.isPlaying
-        };
-        setSharedState(nextState);
-        updateLinkState(nextState);
-      }
+      const serverNow = Date.now() + clockOffset;
+      const currentBeatGlobal = (serverNow - sharedState.startTime) / 1000 * (sharedState.bpm / 60);
+      const newStartTime = serverNow - (currentBeatGlobal * (60 / clampedBpm) * 1000);
+      
+      const nextState = {
+        bpm: clampedBpm,
+        startTime: newStartTime,
+        isPlaying: sharedState.isPlaying,
+        timeSignature: sharedState.timeSignature || "4/4"
+      };
+      setSharedState(nextState);
+      updateLinkState(nextState);
     } else {
       setBpm(clampedBpm);
     }
-  }, [linkEnabled, syncRole, sharedState, setBpm, updateLinkState]);
+  }, [linkEnabled, sharedState, clockOffset, setBpm, updateLinkState]);
 
   const handlePlayToggle = useCallback(() => {
     initAudio();
     if (linkEnabled) {
-      if (syncRole === 'master') {
-        const nextIsPlaying = !sharedState.isPlaying;
-        const nextState = {
-          bpm: sharedState.bpm,
-          isPlaying: nextIsPlaying,
-          startTime: nextIsPlaying ? Date.now() : sharedState.startTime
-        };
-        setSharedState(nextState);
-        updateLinkState(nextState);
-      }
+      const nextIsPlaying = !sharedState.isPlaying;
+      const serverNow = Date.now() + clockOffset;
+      const nextState = {
+        bpm: sharedState.bpm,
+        isPlaying: nextIsPlaying,
+        startTime: nextIsPlaying ? serverNow : sharedState.startTime,
+        timeSignature: sharedState.timeSignature || "4/4"
+      };
+      setSharedState(nextState);
+      updateLinkState(nextState);
     } else {
       toggleMetronome();
     }
-  }, [linkEnabled, syncRole, sharedState, toggleMetronome, updateLinkState, initAudio]);
+  }, [linkEnabled, sharedState, clockOffset, toggleMetronome, updateLinkState, initAudio]);
+
+  const handleTimeSignatureChange = useCallback((newSig: string) => {
+    if (linkEnabled) {
+      const serverNow = Date.now() + clockOffset;
+      const currentBeatGlobal = (serverNow - sharedState.startTime) / 1000 * (sharedState.bpm / 60);
+      const newStartTime = serverNow - (currentBeatGlobal * (60 / sharedState.bpm) * 1000);
+
+      const nextState = {
+        bpm: sharedState.bpm,
+        isPlaying: sharedState.isPlaying,
+        startTime: newStartTime,
+        timeSignature: newSig
+      };
+      setSharedState(nextState);
+      updateLinkState(nextState);
+    } else {
+      setLocalTimeSignature(newSig);
+    }
+  }, [linkEnabled, sharedState, clockOffset, updateLinkState]);
 
   // Tap Tempo logic
   const tapTimes = useRef<number[]>([]);
@@ -116,7 +141,7 @@ export default function App() {
     }
   };
 
-  const isInteractive = !linkEnabled || syncRole === 'master';
+  const isInteractive = true;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#E0E0E0] font-sans selection:bg-[#FF3B30] selection:text-white overflow-hidden flex flex-row">
@@ -152,8 +177,8 @@ export default function App() {
                 </div>
               </div>
               {linkEnabled && (
-                <span className="text-[9px] font-mono opacity-50 uppercase tracking-widest pl-2 border-l border-white/10">
-                  {syncRole}
+                <span className="text-[9px] font-mono text-[#00BFFF] uppercase tracking-widest pl-2 border-l border-white/10">
+                  PEER SYNC
                 </span>
               )}
             </div>
@@ -175,9 +200,9 @@ export default function App() {
       {/* Main Display Area */}
       <main className="flex-1 flex flex-col items-center justify-center relative p-4">
         {/* Sync Mode Instructions Banner */}
-        {linkEnabled && syncRole === 'slave' && (
+        {linkEnabled && (
           <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest opacity-60">
-            Following Master Active Timeline
+            Symmetric Pulse Link Active
           </div>
         )}
 
@@ -186,17 +211,21 @@ export default function App() {
           
           {/* Beat Indicators */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {[0, 1, 2, 3].map((i) => (
-              <div 
-                key={i}
-                className={`absolute w-2.5 h-2.5 rounded-full transition-all duration-200 ${
-                  isPlaying && beat === i 
-                    ? "bg-[#FF3B30] scale-150 shadow-[0_0_15px_rgba(255,59,48,0.6)]" 
-                    : "bg-white/10"
-                }`}
-                style={{ transform: `rotate(${i * 90}deg) translateY(-160px)` }}
-              />
-            ))}
+            {Array.from({ length: parseInt(activeTimeSignature.split('/')[0]) || 4 }).map((_, i) => {
+              const beatsCount = parseInt(activeTimeSignature.split('/')[0]) || 4;
+              const angle = i * (360 / beatsCount);
+              return (
+                <div 
+                  key={i}
+                  className={`absolute w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                    isPlaying && beat === i 
+                      ? "bg-[#FF3B30] scale-150 shadow-[0_0_15px_rgba(255,59,48,0.6)]" 
+                      : "bg-white/10"
+                  }`}
+                  style={{ transform: `rotate(${angle}deg) translateY(-160px)` }}
+                />
+              );
+            })}
           </div>
 
           {/* Main Pulse */}
@@ -232,10 +261,13 @@ export default function App() {
         </div>
 
         {/* BPM Display */}
-        <div className="mt-8 text-center select-none">
+        <div className="mt-8 text-center select-none flex flex-col items-center gap-2">
           <div className="text-[120px] font-mono font-light tracking-tighter leading-none flex items-baseline justify-center">
             {bpm}
             <span className="text-xl ml-4 opacity-30 font-sans uppercase tracking-widest">BPM</span>
+          </div>
+          <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-mono uppercase tracking-widest text-white/50">
+            {activeTimeSignature}
           </div>
         </div>
       </main>
@@ -340,10 +372,35 @@ export default function App() {
               </div>
               
               <div className="space-y-6">
+                {/* Time Signature Section */}
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                  <h3 className="text-xs font-mono uppercase opacity-30 tracking-wider">Time Signature</h3>
+                  <div className="flex bg-black rounded-lg p-1 border border-white/10 justify-between items-center gap-1">
+                    {["2/4", "3/4", "4/4", "5/4", "6/8"].map((sig) => (
+                      <button
+                        key={sig}
+                        onClick={() => handleTimeSignatureChange(sig)}
+                        className={`flex-1 py-1.5 text-xs font-mono uppercase rounded-md transition-all ${
+                          activeTimeSignature === sig
+                            ? "bg-[#FF3B30] text-white font-medium shadow-[0_0_10px_rgba(255,59,48,0.3)]"
+                            : "opacity-50 hover:opacity-100"
+                        }`}
+                      >
+                        {sig}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] opacity-40 leading-normal">
+                    {activeTimeSignature === "6/8" 
+                      ? "6/8 Compound Time: 6 eighth-note beats per measure, accented on 1 and 4." 
+                      : `${activeTimeSignature.split('/')[0]}/4 Simple Time: ${activeTimeSignature.split('/')[0]} quarter-note beats per measure, accented on the first beat.`}
+                  </p>
+                </div>
+
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
                   <h3 className="text-xs font-mono uppercase opacity-30 tracking-wider">Network Sync (Pulse Link)</h3>
                   <p className="text-xs opacity-50 leading-relaxed">
-                    Pulse Link syncs multiple browsers or devices around a mathematically phase-locked master timeline.
+                    Symmetric P2P Sync: All connected devices are equal peers. Anyone can adjust tempo, toggle playback, or update the time signature, and all other devices instantly synchronize.
                   </p>
                   
                   <div className="flex items-center justify-between py-1">
@@ -369,32 +426,6 @@ export default function App() {
 
                   {linkEnabled && (
                     <div className="pt-4 border-t border-white/5 space-y-6">
-                      {/* Sync Role Selection */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Device Role</span>
-                          <div className="flex bg-black rounded-lg p-1 border border-white/10">
-                            <button 
-                              onClick={() => setSyncRole('master')}
-                              className={`px-3 py-1 text-[10px] font-mono uppercase rounded-md transition-all ${syncRole === 'master' ? "bg-[#00BFFF] text-black" : "opacity-50 hover:opacity-100"}`}
-                            >
-                              Master
-                            </button>
-                            <button 
-                              onClick={() => setSyncRole('slave')}
-                              className={`px-3 py-1 text-[10px] font-mono uppercase rounded-md transition-all ${syncRole === 'slave' ? "bg-[#00BFFF] text-black" : "opacity-50 hover:opacity-100"}`}
-                            >
-                              Slave
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-[10px] opacity-40 leading-normal">
-                          {syncRole === 'master' 
-                            ? "Master: This device sets the global timeline, broadcasting tempo and play/pause commands." 
-                            : "Slave: This device behaves strictly as a silent target, running perfectly in phase with the master."}
-                        </p>
-                      </div>
-
                       {/* Latency Slider */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -417,7 +448,7 @@ export default function App() {
 
                       <div className="flex items-center justify-between pt-2 border-t border-white/5">
                         <span className="text-sm opacity-60">Sync Quantum</span>
-                        <span className="text-xs font-mono opacity-60">4 Beats</span>
+                        <span className="text-xs font-mono opacity-60">{activeTimeSignature.split('/')[0]} Beats</span>
                       </div>
                     </div>
                   )}

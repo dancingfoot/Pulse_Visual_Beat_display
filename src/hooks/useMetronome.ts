@@ -7,7 +7,9 @@ export function useMetronome(
   linkEnabled: boolean = false,
   sharedBpm?: number,
   sharedIsPlaying?: boolean,
-  sharedStartTime?: number
+  sharedStartTime?: number,
+  clockOffset: number = 0,
+  timeSignature: string = "4/4"
 ) {
   // Local state for non-linked fallback mode
   const [localBpm, setLocalBpm] = useState(initialBpm);
@@ -31,12 +33,16 @@ export function useMetronome(
   const activeStartTimeRef = useRef(activeStartTime);
   const soundEnabledRef = useRef(soundEnabled);
   const latencyCompensationRef = useRef(latencyCompensation);
+  const clockOffsetRef = useRef(clockOffset);
+  const timeSignatureRef = useRef(timeSignature);
 
   useEffect(() => { activeBpmRef.current = activeBpm; }, [activeBpm]);
   useEffect(() => { activeIsPlayingRef.current = activeIsPlaying; }, [activeIsPlaying]);
   useEffect(() => { activeStartTimeRef.current = activeStartTime; }, [activeStartTime]);
   useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
   useEffect(() => { latencyCompensationRef.current = latencyCompensation; }, [latencyCompensation]);
+  useEffect(() => { clockOffsetRef.current = clockOffset; }, [clockOffset]);
+  useEffect(() => { timeSignatureRef.current = timeSignature; }, [timeSignature]);
 
   // Audio scheduler look-ahead parameters (seconds)
   const lookahead = 25.0; // ms
@@ -86,8 +92,8 @@ export function useMetronome(
 
     const audioCtx = audioContextRef.current;
     
-    // Project Web Audio contexts back onto the absolute timeline clock
-    const nowSec = Date.now() / 1000;
+    // Project Web Audio contexts back onto the absolute timeline clock using synchronized SNTP offset
+    const nowSec = (Date.now() + clockOffsetRef.current) / 1000;
     const contextStartSec = nowSec - audioCtx.currentTime;
     
     const timelineStartSec = activeStartTimeRef.current / 1000;
@@ -102,13 +108,16 @@ export function useMetronome(
     const startBeatIndex = Math.floor((windowStartGlobalSec - timelineStartSec - latencySec) / secondsPerBeat);
     const endBeatIndex = Math.ceil((lookAheadLimitSec - timelineStartSec - latencySec) / secondsPerBeat);
 
+    const timeSig = timeSignatureRef.current;
+    const beatsPerMeasure = parseInt(timeSig.split('/')[0]) || 4;
+
     for (let k = startBeatIndex; k <= endBeatIndex; k++) {
       const globalBeatTime = timelineStartSec + k * secondsPerBeat + latencySec;
       const localAudioTime = globalBeatTime - contextStartSec;
 
       if (localAudioTime >= audioCtx.currentTime && localAudioTime < audioCtx.currentTime + scheduleAheadTime) {
         if (k > lastScheduledBeatRef.current) {
-          scheduleNote((k % 4 + 4) % 4, localAudioTime);
+          scheduleNote((k % beatsPerMeasure + beatsPerMeasure) % beatsPerMeasure, localAudioTime);
           lastScheduledBeatRef.current = k;
         }
       }

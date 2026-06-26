@@ -21,6 +21,8 @@ export default function TesterPeer() {
   const [receivedBpm, setReceivedBpm] = useState<number | null>(null);
   const [receivedIsPlaying, setReceivedIsPlaying] = useState<boolean | null>(null);
   
+  const [clockOffset, setClockOffset] = useState(0);
+  const clockOffsetRef = useRef(0);
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -48,6 +50,17 @@ export default function TesterPeer() {
     socket.onopen = () => {
       setIsConnected(true);
       addLog('info', 'Tester connected to Pulse Link synchronizer');
+
+      // Start ping loop
+      const interval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({
+            type: "PING",
+            clientTime: Date.now()
+          }));
+        }
+      }, 2500);
+      (socket as any).pingInterval = interval;
     };
 
     socket.onmessage = (event) => {
@@ -59,6 +72,18 @@ export default function TesterPeer() {
           addLog('recv', `WELCOME - Assigned client ID: ${message.clientId}`);
         }
         
+        if (message.type === "PONG") {
+          const receiveTime = Date.now();
+          const clientTime = message.clientTime;
+          const serverTime = message.serverTime;
+          const rtt = receiveTime - clientTime;
+          const offset = serverTime - (clientTime + rtt / 2);
+          clockOffsetRef.current = offset;
+          setClockOffset(offset);
+          // Only log periodically or silently record to avoid spamming the log feed
+          addLog('recv', `PONG sync: latency=${rtt}ms, offset=${offset}ms`);
+        }
+
         if (message.type === "SYNC_STATE") {
           const state = message.state;
           setReceivedBpm(state.bpm);
@@ -86,9 +111,14 @@ export default function TesterPeer() {
     };
 
     socket.onclose = () => {
+      if ((socket as any).pingInterval) {
+        clearInterval((socket as any).pingInterval);
+      }
       setIsConnected(false);
       setClientId(null);
       setPeerCount(0);
+      setClockOffset(0);
+      clockOffsetRef.current = 0;
       socketRef.current = null;
       addLog('info', 'Tester socket disconnected');
     };
@@ -113,10 +143,11 @@ export default function TesterPeer() {
       return;
     }
 
+    const serverNow = Date.now() + clockOffsetRef.current;
     const payload = {
       bpm: bpmVal,
       isPlaying: playState,
-      startTime: Date.now()
+      startTime: serverNow
     };
     
     socketRef.current.send(JSON.stringify({

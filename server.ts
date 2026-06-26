@@ -62,6 +62,15 @@ async function startServer() {
       try {
         const message = JSON.parse(data.toString());
         
+        if (message.type === "PING") {
+          ws.send(JSON.stringify({
+            type: "PONG",
+            clientTime: message.clientTime,
+            serverTime: Date.now()
+          }));
+          return;
+        }
+
         if (message.type === "UPDATE_STATE") {
           // Update global state
           sessionState = { 
