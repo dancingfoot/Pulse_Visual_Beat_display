@@ -1,5 +1,6 @@
 {
   "name": "Pulse: Visual Beat Display",
   "description": "A high-precision visual metronome and beat display for musicians, featuring MIDI clock sync and a large, high-contrast pulse for visual feedback while playing.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
