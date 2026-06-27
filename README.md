@@ -81,4 +81,57 @@ To run the central server and web application on your local machine:
    ```
 3. Open your browser and navigate to `http://localhost:3000`.
 
-*Refer to the respective subdirectories (`/web`, `/android`, `/linux`, `/rpi`, `/esp32`) for detailed installation, build, and hardware-wiring instructions!*
+---
+
+## 🎛️ Running the Ableton Link Bridge
+The Ableton Link bridge (`ableton-link-bridge.cjs`) is now available in the root of the project so you can launch it easily.
+
+1. **Install required native packages for your OS**:
+   - **On Linux (Ubuntu, Debian, Pop!_OS, etc.)**:
+     ```bash
+     npm install abletonlink ws
+     ```
+   - **On macOS & Windows**:
+     ```bash
+     npm install @ktamas77/abletonlink ws
+     ```
+2. **Run the bridge** in a separate terminal:
+   ```bash
+   node ableton-link-bridge.cjs
+   ```
+
+---
+
+## 🐍 Running Python Clients (Linux / Raspberry Pi)
+On modern Linux distributions (like Pop!_OS, Ubuntu, Debian) and Raspberry Pi OS, installing packages system-wide using `pip` results in an `externally-managed-environment` error.
+
+Use **Method 2: Python Virtual Environment** to install dependencies safely:
+
+### Method 2: Virtual Environment (venv) Setup
+1. **Create the virtual environment** in the project directory:
+   ```bash
+   python3 -m venv venv --system-site-packages
+   ```
+   *(The `--system-site-packages` flag lets your virtual environment reuse system-level packages like Pygame and NumPy installed via `apt`).*
+
+2. **Activate the environment**:
+   ```bash
+   source venv/bin/activate
+   ```
+
+3. **Install the WebSocket client**:
+   ```bash
+   pip install websocket-client
+   ```
+
+4. **Launch the client**:
+   - For the Desktop GUI (Linux):
+     ```bash
+     python3 linux/pulse_desktop.py
+     ```
+   - For the Terminal CLI (Raspberry Pi):
+     ```bash
+     python3 rpi/pulse_cli.py
+     ```
+
+*Refer to the respective subdirectories (`/web`, `/android`, `/linux`, `/rpi`, `/esp32`) for detailed hardware-wiring and setup guides!*
