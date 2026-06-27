@@ -23,10 +23,20 @@ sudo apt update
 sudo apt install python3-pip python3-numpy python3-pygame -y
 ```
 
-### 2. Install Python Dependencies
-Install the standard websocket client:
+### 2. Install Python Dependencies (Recommended: Virtual Environment)
+Modern Raspberry Pi OS releases enforce PEP 668, meaning you cannot install standard pip packages system-wide without triggering an `externally-managed-environment` error. 
+
+To resolve this, create and run the script inside a Python Virtual Environment:
+
 ```bash
-pip3 install websocket-client
+# Create a virtual environment that can access system packages (like pygame/numpy installed via apt)
+python3 -m venv venv --system-site-packages
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Install the websocket client library inside the virtual environment
+pip install websocket-client
 ```
 
 ---

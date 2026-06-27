@@ -36,11 +36,23 @@ Depending on your package manager:
   sudo pacman -S tk python-pip python-numpy python-pygame --noconfirm
   ```
 
-### 2. Install WebSocket Client
-Install the standard websocket connector library:
+### 2. Install WebSocket Client (Recommended: Virtual Environment)
+Modern Linux distributions (like Pop!_OS, Ubuntu 23+, Debian 12+) prevent system-wide package modification via `pip` (PEP 668: `externally-managed-environment`).
+
+To install dependencies safely, create and use a Python Virtual Environment:
+
 ```bash
-pip3 install websocket-client
+# Create a virtual environment named 'venv'
+python3 -m venv venv
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Install the websocket client inside the virtual environment
+pip install websocket-client
 ```
+
+*Tip: If you already have `python3-numpy` and `python3-pygame` installed via your system package manager (`apt`), you can let the virtual environment inherit them by running `python3 -m venv venv --system-site-packages`.*
 
 ---
 

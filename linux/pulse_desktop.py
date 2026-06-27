@@ -203,7 +203,7 @@ class PulseDesktopApp(tk.Tk):
             text="120",
             fg="#FFFFFF",
             bg="#0A0A0A",
-            font=("Courier", 72, "light")
+            font=("Courier", 72)
         )
         self.bpm_val_lbl.pack(side=tk.LEFT, anchor=tk.S)
 
