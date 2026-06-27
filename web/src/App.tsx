@@ -217,12 +217,12 @@ export default function App() {
               return (
                 <div 
                   key={i}
-                  className={`absolute w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                  className={`absolute w-3.5 h-3.5 md:w-4.5 md:h-4.5 rounded-full transition-all duration-200 ${
                     isPlaying && beat === i 
-                      ? "bg-[#FF3B30] scale-150 shadow-[0_0_15px_rgba(255,59,48,0.6)]" 
-                      : "bg-white/10"
+                      ? "bg-[#FF3B30] scale-150 shadow-[0_0_20px_rgba(255,59,48,0.7)]" 
+                      : "bg-white/20"
                   }`}
-                  style={{ transform: `rotate(${angle}deg) translateY(-160px)` }}
+                  style={{ transform: `rotate(${angle}deg) translateY(-210px)` }}
                 />
               );
             })}
@@ -238,11 +238,11 @@ export default function App() {
                 opacity: isPlaying ? 1 : 0.1 
               }}
               transition={{ type: "spring", stiffness: 450, damping: 20 }}
-              className={`w-64 h-64 rounded-full flex items-center justify-center transition-colors duration-200 ${
-                isPlaying ? (beat === 0 ? "bg-[#FF3B30] shadow-[0_0_50px_rgba(255,59,48,0.4)]" : "bg-white shadow-[0_0_40px_rgba(255,255,255,0.25)]") : "bg-white/5"
+              className={`w-72 h-72 md:w-80 md:h-80 rounded-full flex items-center justify-center transition-colors duration-200 ${
+                isPlaying ? (beat === 0 ? "bg-[#FF3B30] shadow-[0_0_60px_rgba(255,59,48,0.5)]" : "bg-white shadow-[0_0_50px_rgba(255,255,255,0.3)]") : "bg-white/5"
               }`}
             >
-              <div className="text-black font-mono text-8xl md:text-9xl font-black select-none">
+              <div className="text-black font-mono text-9xl md:text-[140px] font-black select-none leading-none">
                 {isPlaying ? beat + 1 : ""}
               </div>
             </motion.div>
@@ -255,7 +255,7 @@ export default function App() {
               initial={{ scale: 1, opacity: 0.6 }}
               animate={{ scale: 2.1, opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className={`absolute w-64 h-64 rounded-full pointer-events-none border-2 ${beat === 0 ? "border-[#FF3B30] bg-[#FF3B30]/5" : "border-white bg-white/5"}`}
+              className={`absolute w-72 h-72 md:w-80 md:h-80 rounded-full pointer-events-none border-2 ${beat === 0 ? "border-[#FF3B30] bg-[#FF3B30]/5" : "border-white bg-white/5"}`}
             />
           )}
         </div>
