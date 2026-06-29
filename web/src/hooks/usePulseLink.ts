@@ -86,7 +86,7 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
               break;
           }
         } catch (e) {
-          console.error('Pulse Link: Failed to parse WS message', e);
+          console.warn('Pulse Link: Failed to parse WS message', e);
         }
       };
 
@@ -99,7 +99,7 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
       };
 
       ws.onerror = (err) => {
-        console.error('Pulse Link: WebSocket error', err);
+        console.warn('Pulse Link: WebSocket connection warning (this is normal during dev/reloads)', err);
       };
     }
 

@@ -1,0 +1,56 @@
+# electron-builder.yml Configuration Blueprint
+appId: com.pulselink.desktop
+productName: PulseLink
+copyright: Copyright © 2026 Pulse Link
+
+# Output directory for desktop builds
+directories:
+  output: dist-desktop
+
+# Define what files are included in the packaged installer
+files:
+  - package.json
+  - electron-main.cjs
+  - ableton-link-bridge.cjs
+  - dist/**/*
+  - node_modules/**/*
+  # Exclude source files, local dev logs, and local configuration cache
+  - "!src/**/*"
+  - "!web/**/*"
+  - "!server.ts"
+  - "!server.log"
+  - "!tsconfig.json"
+  - "!vite.config.ts"
+  - "!*.log"
+
+# Linux Packaging Configuration (Including AppImage)
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+        - arm64
+    - target: deb
+      arch:
+        - x64
+  category: AudioVideo
+  synopsis: Pulse Link Client and Ableton Link Network Sync Bridge
+  description: An offline-first high-fidelity metronome synchronizing browser clients with native Ableton Link networks.
+  maintainer: dancingfoot@gmail.com
+
+# Windows Packaging Configuration
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  publisherName: Pulse Link
+
+# macOS Packaging Configuration
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  category: public.app-category.music
