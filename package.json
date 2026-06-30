@@ -2,6 +2,8 @@
   "name": "react-example",
   "private": true,
   "version": "0.0.0",
+  "description": "Pulse Link Network Sync Client & Metronome",
+  "author": "dancingfoot@gmail.com",
   "type": "module",
   "main": "electron-main.cjs",
   "scripts": {
@@ -10,6 +12,7 @@
     "start": "node server.ts",
     "clean": "rm -rf dist dist-desktop",
     "lint": "tsc --noEmit",
+    "postinstall": "electron-builder install-app-deps",
     "desktop:dev": "npm run build && electron .",
     "desktop:rebuild": "electron-rebuild",
     "desktop:build": "npm run build && electron-builder"

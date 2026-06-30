@@ -1,6 +1,6 @@
 # 🌐 Pulse Beat Sync — Web App & Ableton Link Bridge
 
-The `/web` directory contains the modern React 18 frontend web client, designed with a dark cyberpunk visual style, responsive animations, and integration with local DAWs and performance gear.
+The `/web` directory contains the modern React 18 frontend web client, designed with a dark, high-contrast visual style, responsive animations, and seamless integration with local DAWs and performance gear.
 
 ---
 
@@ -52,7 +52,7 @@ You must install the native bindings appropriate for your operating system:
 Start the central server first, then run the bridge locally in a separate terminal:
 
 ```bash
-node web/ableton-link-bridge.cjs
+node ableton-link-bridge.cjs
 ```
 
 When successful, you will see output confirming connections on both sides:
@@ -67,10 +67,30 @@ Now, any connected web peer, Android peer, or Python CLI client will stay in per
 
 ---
 
-## 🛠️ Architecture
+## 📦 Desktop Packaging (AppImage, DMG, EXE)
+
+You can also run Pulse Link as a **fully standalone desktop application** with an embedded local server, integrated Ableton Link native bridge, and a beautiful frameless Chromium window! 
+
+To bundle the application into a single-file desktop executable (including **AppImage** for Linux):
+
+1. **Test the desktop app locally**:
+   ```bash
+   npm run desktop:dev
+   ```
+2. **Package the installer (e.g. AppImage)**:
+   ```bash
+   npm run desktop:build -- --linux
+   ```
+
+*For detailed instructions on configuring Electron, compiling C++ native Ableton bindings, and generating installers for Linux, Windows, and macOS, please see the **[DESKTOP_PACKAGING.md](../DESKTOP_PACKAGING.md)** file in the root of this repository.*
+
+---
+
+## 🛠️ Code Structure
 
 - `src/App.tsx` — The main single-page cockpit visual interface and controls.
 - `src/hooks/useMetronome.ts` — High-precision audio scheduling loop utilizing the browser's `AudioContext.currentTime` timeline (locks ahead of the JS main thread for absolute stability).
 - `src/hooks/usePulseLink.ts` — Socket state manager, SNTP ping estimator, and network broadcast broker.
 - `src/components/TesterPeer.tsx` — Visual debug tools to simulate additional local peers and network latency.
 - `ableton-link-bridge.cjs` — Native Ableton Link C++ to WebSocket state translator.
+

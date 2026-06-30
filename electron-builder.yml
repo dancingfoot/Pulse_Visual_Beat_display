@@ -44,7 +44,6 @@ win:
     - target: nsis
       arch:
         - x64
-  publisherName: Pulse Link
 
 # macOS Packaging Configuration
 mac:
