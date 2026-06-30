@@ -26,13 +26,8 @@ files:
 # Linux Packaging Configuration (Including AppImage)
 linux:
   target:
-    - target: AppImage
-      arch:
-        - x64
-        - arm64
-    - target: deb
-      arch:
-        - x64
+    - AppImage
+    - deb
   category: AudioVideo
   synopsis: Pulse Link Client and Ableton Link Network Sync Bridge
   description: An offline-first high-fidelity metronome synchronizing browser clients with native Ableton Link networks.
@@ -41,15 +36,10 @@ linux:
 # Windows Packaging Configuration
 win:
   target:
-    - target: nsis
-      arch:
-        - x64
+    - nsis
 
 # macOS Packaging Configuration
 mac:
   target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
+    - dmg
   category: public.app-category.music
