@@ -12,7 +12,7 @@
     "start": "node server.ts",
     "clean": "rm -rf dist dist-desktop",
     "lint": "tsc --noEmit",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps || echo \"electron-builder not found, skipping app-deps installation\"",
     "desktop:dev": "npm run build && electron .",
     "desktop:rebuild": "electron-rebuild",
     "desktop:build": "npm run build && electron-builder"
