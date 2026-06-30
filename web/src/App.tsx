@@ -11,6 +11,7 @@ export default function App() {
   const [showTester, setShowTester] = useState(false);
   const [latencyCompensation, setLatencyCompensation] = useState(0);
   const [localTimeSignature, setLocalTimeSignature] = useState("4/4");
+  const [tempoMultiplier, setTempoMultiplier] = useState(1.0);
 
   // Shared state for collaborative network alignment
   const [sharedState, setSharedState] = useState({
@@ -59,7 +60,8 @@ export default function App() {
     sharedState.isPlaying,
     sharedState.startTime,
     clockOffset,
-    activeTimeSignature
+    activeTimeSignature,
+    tempoMultiplier
   );
 
   // Sync state transitions locally/remotely based on sync role handler
@@ -266,8 +268,41 @@ export default function App() {
             {bpm}
             <span className="text-2xl ml-4 opacity-40 font-sans font-bold uppercase tracking-widest">BPM</span>
           </div>
-          <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-sm font-mono uppercase tracking-widest text-white/70">
-            {activeTimeSignature}
+          <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-sm font-mono uppercase tracking-widest text-[#E0E0E0] flex items-center gap-2">
+            <span>{activeTimeSignature}</span>
+            {tempoMultiplier !== 1.0 && (
+              <span className="text-[#FF3B30] pl-2 border-l border-white/10 font-bold font-mono">
+                {Math.round(bpm * tempoMultiplier)} BPM ({tempoMultiplier}x)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Subdivision & Tempo Ratios Grid */}
+        <div className="mt-6 flex flex-col items-center gap-2.5">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">Grid Subdivision Ratio</span>
+          <div className="flex flex-wrap justify-center bg-white/5 rounded-2xl md:rounded-full p-1 border border-white/10 gap-1 max-w-sm md:max-w-none">
+            {[
+              { label: "0.5x Half", value: 0.5, desc: "Half-time groove" },
+              { label: "1.0x Norm", value: 1.0, desc: "Standard tempo" },
+              { label: "1.5x Swing", value: 1.5, desc: "Polyrhythmic 3:2 swing feel" },
+              { label: "2.0x Double", value: 2.0, desc: "8th note subdivisions" },
+              { label: "3.0x Trip", value: 3.0, desc: "Triplet subdivisions (Swing/Blues)" },
+              { label: "4.0x Quad", value: 4.0, desc: "16th note subdivisions" }
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setTempoMultiplier(item.value)}
+                className={`px-3 py-1.5 text-[11px] font-mono rounded-full transition-all ${
+                  tempoMultiplier === item.value
+                    ? "bg-[#FF3B30] text-white font-medium shadow-[0_0_12px_rgba(255,59,48,0.4)]"
+                    : "opacity-40 hover:opacity-100 text-white"
+                }`}
+                title={item.desc}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       </main>

@@ -9,7 +9,8 @@ export function useMetronome(
   sharedIsPlaying: boolean,
   sharedStartTime: number,
   clockOffset: number,
-  activeTimeSignature: string
+  activeTimeSignature: string,
+  tempoMultiplier: number = 1.0
 ) {
   const [localBpm, setLocalBpm] = useState(initialBpm);
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
@@ -102,7 +103,7 @@ export function useMetronome(
       startLocalAudioTime = audioContext.currentTime + (latencyCompensation / 1000);
     }
 
-    const secondsPerBeat = 60.0 / bpm;
+    const secondsPerBeat = 60.0 / (bpm * tempoMultiplier);
     const lookahead = 0.1; // Check ahead by 100ms
     const intervalMs = 25; // Run scheduler tick every 25ms
 
@@ -154,6 +155,7 @@ export function useMetronome(
   }, [
     isPlaying,
     bpm,
+    tempoMultiplier,
     beatsPerBar,
     linkEnabled,
     sharedStartTime,
