@@ -35,6 +35,8 @@
     "@types/node": "^22.14.0",
     "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.21",
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
