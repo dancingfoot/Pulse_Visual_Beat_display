@@ -12,7 +12,8 @@
     "start": "node server.ts",
     "clean": "rm -rf dist dist-desktop",
     "lint": "tsc --noEmit",
-    "postinstall": "node -e \"try { require('child_process').execSync('electron-builder install-app-deps', { stdio: 'inherit' }); } catch (e) { console.log('electron-builder not found or failed, skipping app-deps installation.'); }\"",
+    "postinstall": "node patch-abletonlink.js && node -e \"try { require('child_process').execSync('electron-builder install-app-deps', { stdio: 'inherit' }); } catch (e) { console.log('electron-builder not found or failed, skipping app-deps installation.'); }\"",
+    "desktop:install": "npm install --ignore-scripts && node patch-abletonlink.js && npm rebuild",
     "desktop:dev": "npm run build && electron .",
     "desktop:rebuild": "electron-rebuild",
     "desktop:build": "npm run build && electron-builder"

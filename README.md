@@ -88,9 +88,11 @@ The Ableton Link bridge (`ableton-link-bridge.cjs`) is now available in the root
 
 1. **Install required native packages for your OS**:
    - **On Linux (Ubuntu, Debian, Pop!_OS, etc.)**:
+     To bypass the known macOS-specific preprocessor bug in `@ktamas77/abletonlink`'s default configuration, we provide an automated installer:
      ```bash
-     npm install abletonlink ws
+     npm run desktop:install
      ```
+     *(This downloads packages without executing their build scripts, applies our platform patch to remove macOS-only headers, and compiles the native binaries correctly for Linux.)*
    - **On macOS & Windows**:
      ```bash
      npm install @ktamas77/abletonlink ws
