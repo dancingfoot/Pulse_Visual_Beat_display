@@ -12,6 +12,8 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
   const [isConnected, setIsConnected] = useState(false);
   const [peerCount, setPeerCount] = useState(0);
   const [clockOffset, setClockOffset] = useState(0);
+  const [nodes, setNodes] = useState<Array<{ id: string; type: string; name: string; latency: number; peers: number }>>([]);
+  const [clientId, setClientId] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const clientIdRef = useRef<string | null>(null);
 
@@ -57,10 +59,15 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
           switch (message.type) {
             case 'WELCOME':
               clientIdRef.current = message.clientId;
+              setClientId(message.clientId);
               break;
 
             case 'PEER_COUNT':
               setPeerCount(message.count);
+              break;
+
+            case 'NODE_LIST':
+              setNodes(message.nodes || []);
               break;
 
             case 'PONG': {
@@ -72,6 +79,14 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
                 if (prev === 0) return Math.round(offset);
                 return Math.round(prev * 0.7 + offset * 0.3);
               });
+
+              // Send our measured latency back to the server
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                  type: 'UPDATE_LATENCY',
+                  latency: Math.round(rtt / 2)
+                }));
+              }
               break;
             }
 
@@ -93,6 +108,8 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
       ws.onclose = () => {
         setIsConnected(false);
         setPeerCount(0);
+        setNodes([]);
+        setClientId(null);
         clearInterval(pingInterval);
         console.log('Pulse Link: Disconnected from WebSocket server. Reconnecting...');
         reconnectTimeout = setTimeout(connect, 3000);
@@ -133,6 +150,8 @@ export function usePulseLink(onStateUpdate: (state: Partial<PulseState>) => void
     peerCount,
     clockOffset,
     toggleLink,
-    updateState
+    updateState,
+    nodes,
+    clientId
   };
 }

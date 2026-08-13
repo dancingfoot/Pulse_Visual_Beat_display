@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
 import fs from "fs";
@@ -20,6 +19,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       root: path.resolve(process.cwd(), "web"),
       server: { middlewareMode: true },
@@ -69,9 +69,27 @@ async function startServer() {
     lastUpdatedBy: null as string | null
   };
 
+  interface NodeInfo {
+    id: string;
+    type: string;
+    name: string;
+    latency: number;
+    peers: number;
+  }
+  const connectedNodes = new Map<string, NodeInfo>();
+
   wss.on("connection", (ws) => {
     const clientId = Math.random().toString(36).substring(7);
     logToFile(`Pulse Link: Client ${clientId} connected`);
+
+    // Add to connected nodes
+    connectedNodes.set(clientId, {
+      id: clientId,
+      type: "Web Client",
+      name: `Web Player (${clientId})`,
+      latency: 0,
+      peers: 0
+    });
     
     // Broadcast peer count to all clients
     const broadcastPeerCount = () => {
@@ -85,7 +103,19 @@ async function startServer() {
       });
     };
 
+    const broadcastNodeList = () => {
+      const nodes = Array.from(connectedNodes.values());
+      logToFile(`Broadcasting node list: total connected = ${nodes.length}`);
+      const msg = JSON.stringify({ type: "NODE_LIST", nodes });
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(msg);
+        }
+      });
+    };
+
     broadcastPeerCount();
+    broadcastNodeList();
     
     // Send initial state and client ID
     ws.send(JSON.stringify({ type: "WELCOME", clientId }));
@@ -101,6 +131,37 @@ async function startServer() {
             clientTime: message.clientTime,
             serverTime: Date.now()
           }));
+          return;
+        }
+
+        if (message.type === "REGISTER") {
+          const node = connectedNodes.get(clientId);
+          if (node) {
+            node.type = message.clientType || node.type;
+            node.name = message.name || node.name;
+            connectedNodes.set(clientId, node);
+            broadcastNodeList();
+          }
+          return;
+        }
+
+        if (message.type === "UPDATE_LATENCY") {
+          const node = connectedNodes.get(clientId);
+          if (node) {
+            node.latency = message.latency;
+            connectedNodes.set(clientId, node);
+            broadcastNodeList();
+          }
+          return;
+        }
+
+        if (message.type === "UPDATE_PEERS") {
+          const node = connectedNodes.get(clientId);
+          if (node) {
+            node.peers = message.numPeers;
+            connectedNodes.set(clientId, node);
+            broadcastNodeList();
+          }
           return;
         }
 
@@ -137,7 +198,9 @@ async function startServer() {
 
     ws.on("close", () => {
       logToFile(`Pulse Link: Client ${clientId} disconnected`);
+      connectedNodes.delete(clientId);
       broadcastPeerCount();
+      broadcastNodeList();
     });
 
     ws.on("error", (err: any) => {

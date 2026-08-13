@@ -94,25 +94,52 @@ This command compiles the web app, boots the backend, spawns the Ableton Link co
 
 We use `electron-builder` with automatic native module rebuilding. It compiles C++ code for your targeted system on the fly.
 
-### 🐧 Build Linux AppImage & Debian package
-To compile a single-file `.AppImage` executable (with zero installation steps required for Linux):
+### 🐧 Build Linux AppImage & Debian package (PC / x86_64)
+To compile a single-file `.AppImage` executable and `.deb` for standard 64-bit Linux PCs (Ubuntu, Pop!_OS, Debian, Mint, Fedora, Arch):
 ```bash
-npm run desktop:build -- --linux
+npm run desktop:build:linux
 ```
 The outputs will appear in the `./dist-desktop` directory:
 * `PulseLink-0.0.0.AppImage` (Executable portable application)
 * `PulseLink_0.0.0_amd64.deb` (Debian/Ubuntu/Mint installer package)
 
-### 🪟 Build Windows Installer
-To build a standalone Windows NSIS installer `.exe`:
+### 🍓 Build for Raspberry Pi (Raspberry Pi OS / ARM64 & ARMv7)
+To package an Electron build for **Raspberry Pi 3, 4, 5, or Zero 2W**:
+
+1. On your Raspberry Pi (running 64-bit or 32-bit Raspberry Pi OS):
 ```bash
-npm run desktop:build -- --win
+# Install system build tools
+sudo apt update
+sudo apt install -y build-essential python3 libasound2-dev libgtk-3-dev libnss3 libxss1
+
+# Build the ARM package directly on the Pi
+npm run desktop:build:rpi
 ```
 
-### 🍏 Build macOS Disk Image
+2. Output packages will be generated in `./dist-desktop`:
+* `PulseLink_0.0.0_arm64.deb` (For 64-bit Raspberry Pi OS)
+* `PulseLink-0.0.0-arm64.AppImage` (Self-contained portable AppImage for ARM64)
+
+To install the `.deb` on your Raspberry Pi:
+```bash
+sudo dpkg -i dist-desktop/PulseLink_0.0.0_arm64.deb
+```
+Or run the portable AppImage:
+```bash
+chmod +x dist-desktop/*.AppImage
+./dist-desktop/*.AppImage
+```
+
+### 🪟 Build Windows Installer (PC)
+To build a standalone Windows NSIS installer `.exe`:
+```bash
+npm run desktop:build:win
+```
+
+### 🍏 Build macOS Disk Image (Mac)
 To build a macOS `.dmg` file for Apple Silicon or Intel chips:
 ```bash
-npm run desktop:build -- --mac
+npm run desktop:build:mac
 ```
 
 ---

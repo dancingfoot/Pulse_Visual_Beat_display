@@ -28,7 +28,9 @@ export default function App() {
     peerCount,
     clockOffset,
     toggleLink, 
-    updateState: updateLinkState
+    updateState: updateLinkState,
+    nodes,
+    clientId
   } = usePulseLink(
     (state) => {
       // Incoming sync state from another peer
@@ -278,6 +280,26 @@ export default function App() {
           </div>
         </div>
 
+        {/* Time Signature Selection Grid in Main UI */}
+        <div className="mt-6 flex flex-col items-center gap-2.5">
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">Time Signature</span>
+          <div className="flex flex-wrap justify-center bg-white/5 rounded-2xl md:rounded-full p-1 border border-white/10 gap-1 max-w-sm md:max-w-none">
+            {["2/4", "3/4", "4/4", "5/4", "3/8", "4/8", "6/8", "7/8"].map((sig) => (
+              <button
+                key={sig}
+                onClick={() => handleTimeSignatureChange(sig)}
+                className={`px-3 py-1.5 text-xs font-mono rounded-full transition-all ${
+                  activeTimeSignature === sig
+                    ? "bg-[#FF3B30] text-white font-medium shadow-[0_0_12px_rgba(255,59,48,0.4)]"
+                    : "opacity-40 hover:opacity-100 text-white"
+                }`}
+              >
+                {sig}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Subdivision & Tempo Ratios Grid */}
         <div className="mt-6 flex flex-col items-center gap-2.5">
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">Grid Subdivision Ratio</span>
@@ -410,12 +432,12 @@ export default function App() {
                 {/* Time Signature Section */}
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
                   <h3 className="text-xs font-mono uppercase opacity-30 tracking-wider">Time Signature</h3>
-                  <div className="flex bg-black rounded-lg p-1 border border-white/10 justify-between items-center gap-1">
-                    {["2/4", "3/4", "4/4", "5/4", "6/8"].map((sig) => (
+                  <div className="grid grid-cols-4 bg-black rounded-lg p-1 border border-white/10 gap-1">
+                    {["2/4", "3/4", "4/4", "5/4", "3/8", "4/8", "6/8", "7/8"].map((sig) => (
                       <button
                         key={sig}
                         onClick={() => handleTimeSignatureChange(sig)}
-                        className={`flex-1 py-1.5 text-xs font-mono uppercase rounded-md transition-all ${
+                        className={`py-1.5 text-xs font-mono uppercase rounded-md transition-all ${
                           activeTimeSignature === sig
                             ? "bg-[#FF3B30] text-white font-medium shadow-[0_0_10px_rgba(255,59,48,0.3)]"
                             : "opacity-50 hover:opacity-100"
@@ -426,8 +448,8 @@ export default function App() {
                     ))}
                   </div>
                   <p className="text-[10px] opacity-40 leading-normal">
-                    {activeTimeSignature === "6/8" 
-                      ? "6/8 Compound Time: 6 eighth-note beats per measure, accented on 1 and 4." 
+                    {activeTimeSignature.endsWith('/8')
+                      ? `${activeTimeSignature} Compound Time: ${activeTimeSignature.split('/')[0]} eighth-note beats per measure.`
                       : `${activeTimeSignature.split('/')[0]}/4 Simple Time: ${activeTimeSignature.split('/')[0]} quarter-note beats per measure, accented on the first beat.`}
                   </p>
                 </div>
@@ -505,7 +527,7 @@ export default function App() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="hidden lg:block border-l border-white/10 shrink-0"
           >
-            <TesterPeer />
+            <TesterPeer nodes={nodes} currentClientId={clientId} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -528,7 +550,7 @@ export default function App() {
                 Close
               </button>
             </div>
-            <TesterPeer />
+            <TesterPeer nodes={nodes} currentClientId={clientId} />
           </motion.div>
         )}
       </AnimatePresence>

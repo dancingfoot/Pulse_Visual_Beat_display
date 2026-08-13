@@ -221,6 +221,18 @@ function connectWebSocket() {
     isConnected = true;
     console.log('🔌 Connected to local Pulse Link WebSocket server!');
     
+    // Register as a specialized Link Bridge node on the server
+    ws.send(JSON.stringify({
+      type: 'REGISTER',
+      clientType: 'Link Bridge',
+      name: 'Local Ableton Link Bridge'
+    }));
+
+    ws.send(JSON.stringify({
+      type: 'UPDATE_PEERS',
+      numPeers: link.getNumPeers()
+    }));
+
     // Sync current Ableton Link state to the WebSocket server on initial connection
     sendLocalStateToWS();
   });
@@ -356,6 +368,12 @@ setInterval(() => {
   if (peers !== prevPeers) {
     console.log(`[LINK] Active Local Link Network Peers: ${peers}`);
     prevPeers = peers;
+    if (isConnected && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'UPDATE_PEERS',
+        numPeers: peers
+      }));
+    }
   }
 
   // If local Link state changed (due to Bespoke Synth, Ableton Live, etc.), update the WebSockets server

@@ -23,11 +23,19 @@ files:
   - "!vite.config.ts"
   - "!*.log"
 
-# Linux Packaging Configuration (Including AppImage)
+# Linux Packaging Configuration (Including AppImage, deb, and Raspberry Pi ARM targets)
 linux:
   target:
-    - AppImage
-    - deb
+    - target: AppImage
+      arch:
+        - x64
+        - arm64
+        - armv7l
+    - target: deb
+      arch:
+        - x64
+        - arm64
+        - armv7l
   category: AudioVideo
   synopsis: Pulse Link Client and Ableton Link Network Sync Bridge
   description: An offline-first high-fidelity metronome synchronizing browser clients with native Ableton Link networks.

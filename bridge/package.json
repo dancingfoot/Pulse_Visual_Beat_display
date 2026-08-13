@@ -1,0 +1,28 @@
+{
+  "name": "pulse-link-bridge",
+  "version": "1.0.0",
+  "description": "Standalone Ableton Link to WebSockets Bridge AppImage",
+  "main": "bridge-main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "cli": "node bridge-cli.cjs",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:deb": "electron-builder --linux deb",
+    "rebuild": "electron-rebuild"
+  },
+  "keywords": ["ableton-link", "bridge", "websockets", "metronome", "sync"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "optionalDependencies": {
+    "abletonlink": "^1.1.2",
+    "@ktamas77/abletonlink": "^1.1.0"
+  }
+}

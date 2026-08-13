@@ -16,7 +16,12 @@
     "desktop:install": "npm install --ignore-scripts && node patch-abletonlink.cjs && npm rebuild",
     "desktop:dev": "npm run build && electron .",
     "desktop:rebuild": "electron-rebuild",
-    "desktop:build": "npm run build && electron-builder"
+    "desktop:build": "npm run build && electron-builder",
+    "desktop:build:linux": "npm run build && electron-builder --linux AppImage deb --x64",
+    "desktop:build:rpi": "npm run build && electron-builder --linux deb AppImage --arm64",
+    "desktop:build:win": "npm run build && electron-builder --win nsis",
+    "desktop:build:mac": "npm run build && electron-builder --mac dmg",
+    "bridge:appimage": "cd bridge && npm install && npm run build:appimage"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
