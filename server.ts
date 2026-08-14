@@ -119,22 +119,34 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      root: path.resolve(process.cwd(), "web"),
-      server: { middlewareMode: true },
-      appType: "spa",
-      configFile: path.resolve(process.cwd(), "vite.config.ts"),
+  // Determine static assets location or Vite dev middleware
+  const possibleDistDirs = [
+    path.join(process.cwd(), "dist"),
+    path.join(__dirname, "dist"),
+    path.join(__dirname),
+    path.join(process.cwd(), "web", "dist")
+  ];
+  const foundDist = possibleDistDirs.find((p) => fs.existsSync(path.join(p, "index.html")));
+
+  if (foundDist) {
+    logToFile(`Serving static web app from ${foundDist}`);
+    app.use(express.static(foundDist));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(foundDist, "index.html"));
     });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+  } else if (process.env.NODE_ENV !== "production") {
+    try {
+      logToFile("Initializing Vite middleware for development...");
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        root: path.resolve(process.cwd(), "web"),
+        server: { middlewareMode: true },
+        appType: "spa"
+      });
+      app.use(vite.middlewares);
+    } catch (err: any) {
+      logToFile(`Vite middleware warning: ${err?.message || err}`);
+    }
   }
 
   const server = app.listen(PORT, "0.0.0.0", () => {
