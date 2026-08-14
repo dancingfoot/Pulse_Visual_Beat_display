@@ -1,67 +1,57 @@
-# 🍓 Pulse Beat Sync — Raspberry Pi & Python Client
+# 🍓 Pulse Beat Sync — Raspberry Pi, MIDI & Modular Client
 
-The `/rpi` directory contains a high-precision Python client designed to run on Linux platforms, specifically the **Raspberry Pi**. It features a color-coded terminal visualizer, optional low-latency audio clicks, and **hardware GPIO triggers** to synchronize physical lights or electrical relays on the beat.
+The `/rpi` directory contains a high-precision Python client and bridge for **Raspberry Pi** (and Linux), translating **Ableton Link & Pulse Beat synchronization** into **Hardware MIDI Clock (24 PPQN)**, **USB/DIN MIDI**, **Eurorack Clock/Reset pulses**, and an **HDMI/Touchscreen Visual Beat Display** (inspired by [codenuts42/modular-link](https://github.com/codenuts42/modular-link) and [shaduzlabs/pink-0](https://github.com/shaduzlabs/pink-0)).
 
 ---
 
 ## ✨ Features
 
-- **Lightweight & High-Precision**: Leverages high-resolution Python `time.time()` timers in a spinning metronome thread, ensuring timing accuracy without CPU starvation.
-- **Color ASCII Visualization**: Prints dynamic terminal flashes utilizing ANSI background blocks. Excellent for headless SSH sessions!
-- **GPIO Hardware Triggers**: Triggers standard GPIO output lines to drive physical LEDs, optocouplers, lasers, or electrical switches on the precise millisecond of the beat.
-- **Dual-mode Audio**: Synthesizes custom sine waves using `pygame` and `numpy` if available, or falls back to system terminal bells (`\a`) for zero-dependency environments.
-- **Auto-reconnection & Recovery**: Seamlessly tries to re-establish connections if the synchronizer server reboots or goes offline.
+- **Ableton Link to MIDI Clock**: Generates standard 24 PPQN real-time MIDI Clock (`0xF8`), MIDI Start (`0xFA`), and MIDI Stop (`0xFC`) synchronized to network peers.
+- **USB MIDI & DIN MIDI Out**: Auto-detects USB MIDI interfaces or outputs directly via Raspberry Pi UART (GPIO 14 TXD at 31250 baud) to standard 5-pin DIN MIDI jacks.
+- **MIDI Note Triggers**: Sends configurable MIDI Note-On pulses (e.g. Kick on beat 1, Snare on 2/3/4) to drive drum synths directly.
+- **HDMI / Touchscreen GUI Visualizer**: Rich Pygame fullscreen beat counter with glowing pulse rings, tempo display, and tap controls for Raspberry Pi displays.
+- **Eurorack / Modular GPIO Pulses**: Triggers **BCM Pin 18** (Clock) and **BCM Pin 24** (Reset / Downbeat).
+- **Color ASCII Terminal Visualizer**: Clean ANSI bar visualizer for lightweight or headless SSH sessions.
 
 ---
 
-## 🛠️ Requirements & Installation
+## 📚 Guides & Documentation
 
-### 1. Python Environment
-Make sure you have Python 3 installed. On Raspberry Pi (Raspbian / Raspberry Pi OS):
+- **[MIDI Setup Guide](MIDI_SETUP_GUIDE.md)**: Connecting USB MIDI interfaces, 5-pin DIN hardware circuits, 31250 baud configuration, and synth sync.
+- **[Pink-0 & Eurorack Modular Guide](PINK_0_RPI_GUIDE.md)**: Eurorack 0–5V CV clock/reset level shifting and native C++ daemon builds.
+
+---
+
+## 🛠️ Quick Installation
+
 ```bash
+# 1. System packages
 sudo apt update
-sudo apt install python3-pip python3-numpy python3-pygame -y
-```
+sudo apt install -y python3-pip python3-numpy python3-pygame python3-rpi.gpio git libasound2-dev
 
-### 2. Install Python Dependencies (Recommended: Virtual Environment)
-Modern Raspberry Pi OS releases enforce PEP 668, meaning you cannot install standard pip packages system-wide without triggering an `externally-managed-environment` error. 
-
-To resolve this, create and run the script inside a Python Virtual Environment:
-
-```bash
-# Create a virtual environment that can access system packages (like pygame/numpy installed via apt)
-python3 -m venv venv --system-site-packages
-
-# Activate the virtual environment
-source venv/bin/activate
-
-# Install the websocket client library inside the virtual environment
-pip install websocket-client
+# 2. Virtual environment & MIDI libraries
+python3 -m venv ~/pulse-env --system-site-packages
+source ~/pulse-env/bin/activate
+pip install websocket-client mido python-rtmidi pyserial
 ```
 
 ---
 
 ## 🚀 Running the Client
 
-Start the central server, then run the Python script. By default, it looks for a server running on `localhost`:
-
 ```bash
-python3 rpi/pulse_link_client.py
+# Standard CLI with auto-detected USB MIDI
+python3 rpi/pulse_link_client.py ws://<PULSE_SERVER_IP>:3000/ws
+
+# With Fullscreen HDMI / Touchscreen GUI:
+python3 rpi/pulse_link_client.py ws://<PULSE_SERVER_IP>:3000/ws --fullscreen
+
+# With MIDI Drum Note Triggers:
+python3 rpi/pulse_link_client.py ws://<PULSE_SERVER_IP>:3000/ws --midi-notes --midi-channel 10
+
+# With Hardware 5-Pin DIN MIDI UART:
+python3 rpi/pulse_link_client.py ws://<PULSE_SERVER_IP>:3000/ws --uart
 ```
-
-### Target a Custom IP URL
-If your central server is running on a different machine on your local Wi-Fi, pass the WebSocket address as a startup argument:
-
-```bash
-python3 rpi/pulse_link_client.py ws://192.168.1.75:3000/ws
-```
-
-### Keyboard Shortcuts
-While the client is running, you can issue commands directly inside the terminal:
-- **`Space` or `P` + `Enter`**: Toggle session playback (starts/stops metronomes on all connected phones and browsers!).
-- **`bpm <number>` + `Enter`**: Change the global session speed. Example: `bpm 128`
-- **`help` + `Enter`**: Print command help.
-- **`q` or `exit` + `Enter`**: Safely close sockets, clean up GPIO pins, and exit.
 
 ---
 

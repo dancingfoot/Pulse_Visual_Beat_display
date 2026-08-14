@@ -40,16 +40,16 @@ let nativeLinkAdapter: NativeLinkAdapter | null = null;
 
 function initNativeAbletonLink(initialBpm: number): NativeLinkAdapter | null {
   try {
-    let AbletonLinkClass: any = null;
+    let mod: any = null;
     let isKtamas = false;
 
     try {
-      AbletonLinkClass = dynamicRequire("abletonlink");
+      mod = dynamicRequire("abletonlink");
       isKtamas = false;
       logToFile("Found 'abletonlink' native bindings.");
     } catch {
       try {
-        AbletonLinkClass = dynamicRequire("@ktamas77/abletonlink");
+        mod = dynamicRequire("@ktamas77/abletonlink");
         isKtamas = true;
         logToFile("Found '@ktamas77/abletonlink' native bindings.");
       } catch {
@@ -57,13 +57,33 @@ function initNativeAbletonLink(initialBpm: number): NativeLinkAdapter | null {
       }
     }
 
-    if (!AbletonLinkClass) {
+    if (!mod) {
       logToFile("ℹ Native Ableton Link C++ bindings not loaded. Operating with high-precision network clock.");
       return null;
     }
 
-    const link = isKtamas ? new AbletonLinkClass(initialBpm) : new AbletonLinkClass();
-    if (!isKtamas) link.bpm = initialBpm;
+    let AbletonLinkClass: any = null;
+    if (typeof mod === "function") {
+      AbletonLinkClass = mod;
+    } else if (mod && typeof mod.AbletonLink === "function") {
+      AbletonLinkClass = mod.AbletonLink;
+    } else if (mod && typeof mod.default === "function") {
+      AbletonLinkClass = mod.default;
+    } else if (mod && mod.default && typeof mod.default.AbletonLink === "function") {
+      AbletonLinkClass = mod.default.AbletonLink;
+    }
+
+    let link: any = null;
+    if (typeof AbletonLinkClass === "function") {
+      try {
+        link = isKtamas ? new AbletonLinkClass(initialBpm) : new AbletonLinkClass();
+      } catch (err) {
+        link = isKtamas ? AbletonLinkClass(initialBpm) : AbletonLinkClass();
+      }
+    } else {
+      logToFile(`[Native Link] Unrecognized export format on module: ${Object.keys(mod || {}).join(", ")}`);
+      return null;
+    }
 
     try {
       if (isKtamas) {
@@ -71,7 +91,9 @@ function initNativeAbletonLink(initialBpm: number): NativeLinkAdapter | null {
         link.enableStartStopSync(true);
       } else {
         link.isLinkEnable = true;
-        link.isPlayStateSync = true;
+        if ("isPlayStateSync" in link) {
+          link.isPlayStateSync = true;
+        }
       }
     } catch (e) {}
 
@@ -119,34 +141,25 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Determine static assets location or Vite dev middleware
-  const possibleDistDirs = [
-    path.join(process.cwd(), "dist"),
-    path.join(__dirname, "dist"),
-    path.join(__dirname),
-    path.join(process.cwd(), "web", "dist")
-  ];
-  const foundDist = possibleDistDirs.find((p) => fs.existsSync(path.join(p, "index.html")));
+  // Health and API routes first
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", time: Date.now() });
+  });
 
-  if (foundDist) {
-    logToFile(`Serving static web app from ${foundDist}`);
-    app.use(express.static(foundDist));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(foundDist, "index.html"));
+  // Vite middleware for development vs static build in production
+  if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
     });
-  } else if (process.env.NODE_ENV !== "production") {
-    try {
-      logToFile("Initializing Vite middleware for development...");
-      const { createServer: createViteServer } = await import("vite");
-      const vite = await createViteServer({
-        root: path.resolve(process.cwd(), "web"),
-        server: { middlewareMode: true },
-        appType: "spa"
-      });
-      app.use(vite.middlewares);
-    } catch (err: any) {
-      logToFile(`Vite middleware warning: ${err?.message || err}`);
-    }
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
 
   const server = app.listen(PORT, "0.0.0.0", () => {
