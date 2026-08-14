@@ -39,7 +39,7 @@ export default function TesterPeer({ nodes, currentClientId }: TesterPeerProps) 
           ) : (
             nodes.map((node) => {
               const isSelf = node.id === currentClientId;
-              const isBridge = node.type === 'Link Bridge' || node.name.toLowerCase().includes('bridge');
+              const isLink = node.type === 'Ableton Link' || node.type === 'Link Bridge' || node.name.toLowerCase().includes('link');
               
               return (
                 <div
@@ -47,12 +47,14 @@ export default function TesterPeer({ nodes, currentClientId }: TesterPeerProps) 
                   className={`flex flex-col gap-2 p-3.5 rounded-xl border transition-all ${
                     isSelf 
                       ? "bg-[#00BFFF]/5 border-[#00BFFF]/20" 
+                      : isLink
+                      ? "bg-[#FF3B30]/5 border-[#FF3B30]/20"
                       : "bg-white/5 border-white/10"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {isBridge ? (
+                      {isLink ? (
                         <Radio size={14} className="text-[#FF3B30]" />
                       ) : (
                         <Laptop size={14} className="text-[#00BFFF]" />
@@ -79,9 +81,9 @@ export default function TesterPeer({ nodes, currentClientId }: TesterPeerProps) 
                   <div className="flex items-center justify-between text-[9px] font-mono text-white/40 pt-1.5 border-t border-white/5">
                     <span className="uppercase opacity-80">{node.type}</span>
                     
-                    {isBridge && (
+                    {isLink && (
                       <span className="text-[#FF3B30] font-semibold uppercase">
-                        {node.peers} Native {node.peers === 1 ? 'Peer' : 'Peers'}
+                        {node.peers} DAW {node.peers === 1 ? 'Peer' : 'Peers'}
                       </span>
                     )}
                   </div>

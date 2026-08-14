@@ -2,9 +2,8 @@
  * Electron Main Controller Script for Pulse Link
  * 
  * This script runs in Electron's Main Process. It is responsible for:
- *   1. Launching the backend Express server on port 3000.
- *   2. Initializing the native Ableton Link WebSocket Bridge.
- *   3. Creating a polished desktop browser window to display the React application.
+ *   1. Launching the backend Express server on port 3000 (with native Ableton Link UDP sync).
+ *   2. Creating a polished desktop window to display the React application.
  */
 
 const { app, BrowserWindow, shell } = require('electron');
@@ -13,13 +12,12 @@ const { fork } = require('child_process');
 
 let mainWindow = null;
 let serverProcess = null;
-let bridgeProcess = null;
 
 // Determine if running in development mode
 const isDev = !app.isPackaged;
 
 function startBackend() {
-  console.log('Pulse Link Desktop: Starting backend server...');
+  console.log('Pulse Link Desktop: Starting backend server with native Ableton Link sync...');
   
   // In a packaged Electron app, we run the compiled JS server, otherwise we run the TS server
   const serverPath = isDev 
@@ -45,20 +43,6 @@ function startBackend() {
 
   serverProcess.on('error', (err) => {
     console.error('Failed to start backend server:', err);
-  });
-}
-
-function startLinkBridge() {
-  console.log('Pulse Link Desktop: Starting native Ableton Link bridge...');
-  
-  const bridgePath = path.join(__dirname, 'ableton-link-bridge.cjs');
-
-  bridgeProcess = fork(bridgePath, [], {
-    env: { ...process.env }
-  });
-
-  bridgeProcess.on('error', (err) => {
-    console.error('Failed to start Ableton Link bridge:', err);
   });
 }
 
@@ -97,18 +81,14 @@ function createWindow() {
 
 // Ensure background servers are cleaned up when the desktop app is closed
 function cleanUp() {
-  console.log('Pulse Link Desktop: Shutting down background processes...');
+  console.log('Pulse Link Desktop: Shutting down backend...');
   if (serverProcess) {
     serverProcess.kill('SIGINT');
-  }
-  if (bridgeProcess) {
-    bridgeProcess.kill('SIGINT');
   }
 }
 
 app.whenReady().then(() => {
   startBackend();
-  startLinkBridge();
   createWindow();
 
   app.on('activate', () => {
@@ -128,3 +108,4 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   cleanUp();
 });
+

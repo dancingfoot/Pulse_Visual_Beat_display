@@ -20,8 +20,10 @@
     "desktop:build:linux": "npm run build && electron-builder --linux AppImage deb --x64",
     "desktop:build:rpi": "npm run build && electron-builder --linux deb AppImage --arm64",
     "desktop:build:win": "npm run build && electron-builder --win nsis",
-    "desktop:build:mac": "npm run build && electron-builder --mac dmg",
-    "bridge:appimage": "cd bridge && npm install && npm run build:appimage"
+    "desktop:build:mac": "npm run build && electron-builder --mac dmg"
+  },
+  "optionalDependencies": {
+    "@ktamas77/abletonlink": "^1.1.0"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

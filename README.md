@@ -83,24 +83,30 @@ To run the central server and web application on your local machine:
 
 ---
 
-## 🎛️ Running the Ableton Link Bridge
-The Ableton Link bridge (`ableton-link-bridge.cjs`) is now available in the root of the project so you can launch it easily.
+## 🎛️ Native Ableton Link (Direct Local LAN Sync)
+Ableton Link is built directly into the application backend and desktop app. There is no external bridge needed!
 
 1. **Install required native packages for your OS**:
    - **On Linux (Ubuntu, Debian, Pop!_OS, etc.)**:
-     To bypass the known macOS-specific preprocessor bug in `@ktamas77/abletonlink`'s default configuration, we provide an automated installer:
+     To compile native C++ Link bindings for Linux:
      ```bash
      npm run desktop:install
      ```
-     *(This downloads packages without executing their build scripts, applies our platform patch to remove macOS-only headers, and compiles the native binaries correctly for Linux.)*
+     *(This downloads packages, applies our platform patch, and compiles the native C++ binaries cleanly for Linux.)*
    - **On macOS & Windows**:
      ```bash
-     npm install @ktamas77/abletonlink ws
+     npm install
      ```
-2. **Run the bridge** in a separate terminal:
-   ```bash
-   node ableton-link-bridge.cjs
-   ```
+2. **Start the application**:
+   - For web & local server:
+     ```bash
+     npm run dev
+     ```
+   - For standalone desktop Electron app:
+     ```bash
+     npm run desktop:dev
+     ```
+The application will automatically detect and synchronize with any DAWs (Ableton Live, Bitwig, Traktor, MPC) active on your local network!
 
 ---
 
