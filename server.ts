@@ -4,7 +4,15 @@ import path from "path";
 import fs from "fs";
 import { createRequire } from "module";
 
-const require = createRequire(import.meta.url);
+// Dynamic require helper compatible across ESM (development) and bundled CJS (production)
+let dynamicRequire: (id: string) => any;
+try {
+  dynamicRequire = typeof require === "function" ? require : createRequire(import.meta.url);
+} catch {
+  dynamicRequire = (id: string) => {
+    throw new Error(`Cannot require module: ${id}`);
+  };
+}
 
 // Simple file logger for backend debugging
 const logPath = "/tmp/server.log";
@@ -36,12 +44,12 @@ function initNativeAbletonLink(initialBpm: number): NativeLinkAdapter | null {
     let isKtamas = false;
 
     try {
-      AbletonLinkClass = require("abletonlink");
+      AbletonLinkClass = dynamicRequire("abletonlink");
       isKtamas = false;
       logToFile("Found 'abletonlink' native bindings.");
     } catch {
       try {
-        AbletonLinkClass = require("@ktamas77/abletonlink");
+        AbletonLinkClass = dynamicRequire("@ktamas77/abletonlink");
         isKtamas = true;
         logToFile("Found '@ktamas77/abletonlink' native bindings.");
       } catch {
