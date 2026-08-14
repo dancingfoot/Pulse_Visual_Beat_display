@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "cli": "node bridge-cli.cjs",
+    "setup:linux": "npm install --ignore-scripts && node patch-abletonlink.cjs && npm rebuild",
     "build:appimage": "electron-builder --linux AppImage",
     "build:deb": "electron-builder --linux deb",
     "rebuild": "electron-rebuild"
@@ -14,7 +15,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@ktamas77/abletonlink": "^1.1.0"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

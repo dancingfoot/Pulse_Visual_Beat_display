@@ -17,11 +17,13 @@ if command -v apt-get &> /dev/null; then
     # Note: user should ensure build-essential and python3 are present
 fi
 
-# 2. Install dependencies
-echo "📥 Installing bridge dependencies & electron-builder..."
-npm install
+# 2. Install dependencies & patch for Linux
+echo "📥 Installing bridge dependencies & patching native bindings for Linux..."
+npm install --ignore-scripts
+node patch-abletonlink.cjs
+npm rebuild
 
-# 3. Build native abletonlink module for Linux
+# 3. Build native abletonlink module for Electron
 echo "⚙️ Rebuilding native Ableton Link C++ bindings for Electron..."
 npx @electron/rebuild || true
 
